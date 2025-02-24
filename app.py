@@ -1,38 +1,55 @@
-import streamlit as st
 import pandas as pd
-import datetime
+from datetime import datetime
 
-# Inicializar sesión de datos si no existe
-if 'trades' not in st.session_state:
-    st.session_state.trades = []
+# Crear un DataFrame vacío para almacenar las operaciones
+columns = ['Fecha', 'Hora', 'Tipo de Opción', 'Par de Divisas', 'Monto Invertido', 'Resultado', 'Ganancia/Pérdida', 'Porcentaje de Ganancia/Pérdida']
+df = pd.DataFrame(columns=columns)
 
-st.title("Registro de Operaciones - Trading Binarias")
+# Función para registrar una nueva operación
+def registrar_operacion(tipo_opcion, par_divisas, monto_invertido, resultado, ganancia_perdida):
+    # Obtener la fecha y hora actual
+    fecha_hora = datetime.now()
+    fecha = fecha_hora.strftime('%Y-%m-%d')
+    hora = fecha_hora.strftime('%H:%M:%S')
+    
+    # Calcular el porcentaje de ganancia/pérdida
+    if monto_invertido != 0:
+        porcentaje = (ganancia_perdida / monto_invertido) * 100
+    else:
+        porcentaje = 0
+    
+    # Crear un diccionario con los datos de la operación
+    operacion = {
+        'Fecha': fecha,
+        'Hora': hora,
+        'Tipo de Opción': tipo_opcion,
+        'Par de Divisas': par_divisas,
+        'Monto Invertido': monto_invertido,
+        'Resultado': resultado,
+        'Ganancia/Pérdida': ganancia_perdida,
+        'Porcentaje de Ganancia/Pérdida': porcentaje
+    }
+    
+    # Añadir la operación al DataFrame
+    global df
+    df = df.append(operacion, ignore_index=True)
+    
+    # Guardar el DataFrame en un archivo CSV
+    df.to_csv('registro_operaciones.csv', index=False)
+    
+    print("Operación registrada con éxito!")
 
-# Formulario para ingresar datos
-with st.form("trade_form"):
-    date = st.date_input("Fecha", datetime.date.today())
-    time = st.time_input("Hora", datetime.datetime.now().time())
-    asset = st.text_input("Activo")
-    amount = st.number_input("Inversión", min_value=0.0, step=0.1)
-    result = st.selectbox("Resultado", ["Ganada", "Perdida"])
-    submit = st.form_submit_button("Agregar operación")
+# Función para filtrar las operaciones
+def filtrar_operaciones(columna, valor):
+    filtered_df = df[df[columna] == valor]
+    return filtered_df
 
-if submit:
-    st.session_state.trades.append({
-        "Fecha": date.strftime("%Y-%m-%d"),
-        "Hora": time.strftime("%H:%M"),
-        "Activo": asset,
-        "Inversión": amount,
-        "Resultado": result,
-    })
-    st.success("Operación registrada con éxito")
+# Ejemplo de uso
+registrar_operacion('Compra', 'EUR/USD', 100, 'Ganancia', 15)
+registrar_operacion('Venta', 'GBP/USD', 200, 'Pérdida', -25)
 
-# Mostrar tabla de registros
-if st.session_state.trades:
-    df = pd.DataFrame(st.session_state.trades)
-    st.write("### Historial de Operaciones")
-    st.dataframe(df)
+# Filtrar por tipo de opción
+print(filtrar_operaciones('Tipo de Opción', 'Compra'))
 
-    # Gráfico de rendimiento
-    st.write("### Rendimiento de Inversión")
-    st.line_chart(df.set_index("Fecha")["Inversión"])
+# Filtrar por resultado
+print(filtrar_operaciones('Resultado', 'Ganancia'))
