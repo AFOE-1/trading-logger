@@ -1,3 +1,4 @@
+import streamlit as st
 import pandas as pd
 from datetime import datetime
 
@@ -37,19 +38,38 @@ def registrar_operacion(tipo_opcion, par_divisas, monto_invertido, resultado, ga
     # Guardar el DataFrame en un archivo CSV
     df.to_csv('registro_operaciones.csv', index=False)
     
-    print("Operación registrada con éxito!")
+    st.success("Operación registrada con éxito!")
 
 # Función para filtrar las operaciones
 def filtrar_operaciones(columna, valor):
     filtered_df = df[df[columna] == valor]
     return filtered_df
 
-# Ejemplo de uso
-registrar_operacion('Compra', 'EUR/USD', 100, 'Ganancia', 15)
-registrar_operacion('Venta', 'GBP/USD', 200, 'Pérdida', -25)
+# Interfaz de Streamlit
+st.title("Registro de Operaciones de Trading")
 
-# Filtrar por tipo de opción
-print(filtrar_operaciones('Tipo de Opción', 'Compra'))
+# Formulario para registrar una operación
+tipo_opcion = st.selectbox("Tipo de Opción", ['Compra', 'Venta'])
+par_divisas = st.text_input("Par de Divisas (Ej: EUR/USD)")
+monto_invertido = st.number_input("Monto Invertido", min_value=0)
+resultado = st.selectbox("Resultado", ['Ganancia', 'Pérdida'])
+ganancia_perdida = st.number_input("Ganancia/Pérdida (en USD)")
 
-# Filtrar por resultado
-print(filtrar_operaciones('Resultado', 'Ganancia'))
+# Botón para registrar la operación
+if st.button("Registrar Operación"):
+    registrar_operacion(tipo_opcion, par_divisas, monto_invertido, resultado, ganancia_perdida)
+
+# Mostrar las operaciones registradas
+if st.checkbox("Mostrar todas las operaciones"):
+    st.write(df)
+
+# Filtrar operaciones
+st.subheader("Filtrar Operaciones")
+filtro_columna = st.selectbox("Filtrar por", df.columns)
+filtro_valor = st.text_input("Valor del filtro")
+if st.button("Filtrar"):
+    if filtro_valor:
+        filtered_df = filtrar_operaciones(filtro_columna, filtro_valor)
+        st.write(filtered_df)
+    else:
+        st.warning("Por favor ingresa un valor para filtrar.")
